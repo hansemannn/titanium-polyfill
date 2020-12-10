@@ -1,0 +1,18 @@
+#
+# this is your module manifest and used by Titanium
+# during compilation, packaging, distribution, etc.
+#
+version: 1.0.0
+apiversion: 4
+architectures: arm64-v8a armeabi-v7a x86 x86_64
+description: titanium-polyfill
+author: Hans Knoechel
+license: MIT
+copyright: Copyright (c) 2020 by Hans Knoechel
+
+# these should not be edited
+name: titanium-polyfill
+moduleid: ti.polyfill
+guid: 3d92280f-8dd4-4135-8cec-a47bed37c5f9
+platform: android
+minsdk: 9.3.0
