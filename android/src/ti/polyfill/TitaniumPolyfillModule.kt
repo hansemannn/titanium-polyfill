@@ -9,19 +9,22 @@
 
 package ti.polyfill
 
-import android.content.Context
-import android.util.DisplayMetrics
+import android.os.Build
 import android.view.View
-import android.view.ViewGroup.MarginLayoutParams
+import androidx.annotation.RequiresApi
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
+import com.google.android.play.core.splitinstall.SplitInstallRequest
+import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import org.appcelerator.kroll.KrollDict
+import org.appcelerator.kroll.KrollFunction
 import org.appcelerator.kroll.KrollModule
 import org.appcelerator.kroll.annotations.Kroll
 import org.appcelerator.kroll.annotations.Kroll.method
+import org.appcelerator.kroll.common.Log
 import org.appcelerator.titanium.TiApplication
 import java.text.NumberFormat
 import java.util.*
-
 
 @Kroll.module(name = "TitaniumPolyfill", id = "ti.polyfill")
 class TitaniumPolyfillModule: KrollModule() {
@@ -51,5 +54,43 @@ class TitaniumPolyfillModule: KrollModule() {
 		snackBar.setAction("OK", null)
 
 		snackBar.show()
+	}
+
+	@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+	@method
+	fun downloadLanguage(language: String, callback: KrollFunction) {
+		val splitInstallManager = SplitInstallManagerFactory.create(TiApplication.getAppRootOrCurrentActivity().applicationContext)
+		var mySessionId = 0
+
+		// Creates a listener for request status updates.
+		val listener = SplitInstallStateUpdatedListener { state ->
+			if (state.sessionId() == mySessionId) {
+				Log.d("ti.polyfill", "${state.status()}")
+			}
+		}
+
+		val request = SplitInstallRequest.newBuilder()
+				.addLanguage(Locale.forLanguageTag(language))
+				.build()
+
+		splitInstallManager.registerListener(listener)
+		splitInstallManager
+				.startInstall(request)
+				.addOnSuccessListener {
+					val event = KrollDict()
+					event["success"] = true
+
+					splitInstallManager.unregisterListener(listener)
+					callback.callAsync(krollObject, event)
+				}
+				.addOnFailureListener { exception ->
+					val event = KrollDict()
+					event["success"] = false
+					event["error"] = exception.localizedMessage
+
+					splitInstallManager.unregisterListener(listener)
+					callback.callAsync(krollObject, event)
+				}
+
 	}
 }
