@@ -9,9 +9,17 @@
 
 package ti.polyfill
 
+import android.app.Activity
+import android.content.DialogInterface
+import android.content.pm.PackageManager
 import android.os.Build
 import android.view.View
 import androidx.annotation.RequiresApi
+import com.github.javiersantos.piracychecker.PiracyChecker
+import com.github.javiersantos.piracychecker.allow
+import com.github.javiersantos.piracychecker.doNotAllow
+import com.github.javiersantos.piracychecker.onError
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
@@ -21,6 +29,7 @@ import org.appcelerator.kroll.KrollFunction
 import org.appcelerator.kroll.KrollModule
 import org.appcelerator.kroll.annotations.Kroll
 import org.appcelerator.kroll.annotations.Kroll.method
+import org.appcelerator.kroll.annotations.Kroll.property
 import org.appcelerator.kroll.common.Log
 import org.appcelerator.titanium.TiApplication
 import java.text.NumberFormat
@@ -33,10 +42,36 @@ class TitaniumPolyfillModule: KrollModule() {
 	fun formattedCurrency(params: KrollDict): String {
 		val value = params.getDouble("value")
 		val currency = params.getString("currency")
+		val minimumFractionDigits = params.getInt("minimumFractionDigits")
+		val maximumFractionDigits = params.getInt("maximumFractionDigits")
+
 		val format: NumberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
 		format.currency = Currency.getInstance(currency)
 
+		minimumFractionDigits?.let {
+			format.minimumFractionDigits = it
+		}
+
+		maximumFractionDigits?.let {
+			format.maximumFractionDigits = it
+		}
+
 		return format.format(value)
+	}
+
+	@method
+	fun installSource(): String {
+		val context = TiApplication.getInstance().applicationContext
+		val pkgManager: PackageManager = context.packageManager
+		val installerPackageName = pkgManager.getInstallerPackageName(context.packageName)
+
+		return if (installerPackageName!!.startsWith("com.amazon")) {
+			"amazon"
+		} else if ("com.android.vending" == installerPackageName) {
+			"play_store"
+		} else {
+			"unknown"
+		}
 	}
 
 	@method
@@ -92,5 +127,86 @@ class TitaniumPolyfillModule: KrollModule() {
 					callback.callAsync(krollObject, event)
 				}
 
+	}
+
+	@Kroll.method
+	fun showAlert(params: KrollDict) {
+		val callback = params["callback"] as KrollFunction
+		val title = params["title"] as? String
+		val message = params["message"] as? String
+		val buttonNames = params["buttonNames"] as Array<Object>
+		val nativeButtonNames = buttonNames.map { it as String }
+
+		var builder = MaterialAlertDialogBuilder(getCurrentActivity())
+			.setTitle(title)
+			.setMessage(message)
+			.setOnCancelListener {
+				fireEventWithIndex(callback, -1)
+			}
+
+		buttonNames?.let {
+			when (buttonNames.size) {
+				1 -> {
+					builder = builder.setPositiveButton(nativeButtonNames.first()) { _, _ ->
+						fireEventWithIndex(callback, 0)
+					}
+				}
+				2 -> {
+					builder = builder.setPositiveButton(nativeButtonNames.first()) { _, _ ->
+						fireEventWithIndex(callback, 0)
+					}
+							.setNegativeButton(nativeButtonNames[1]) { _, _ ->
+								fireEventWithIndex(callback, 1)
+							}
+				}
+				3 -> {
+					builder = builder.setPositiveButton(nativeButtonNames.first()) { _, _ ->
+						fireEventWithIndex(callback, 0)
+					}
+							.setNegativeButton(nativeButtonNames[1]) { _, _ ->
+								fireEventWithIndex(callback, 1)
+							}
+							.setNeutralButton(nativeButtonNames[2]) { _, _ ->
+								fireEventWithIndex(callback, 2)
+							}
+				}
+			}
+		}
+
+		builder.show()
+	}
+
+	@Kroll.method
+	fun enablePiracyChecker(callback: KrollFunction) {
+		PiracyChecker(getCurrentActivity())
+			.enableUnauthorizedAppsCheck()
+			.allow {
+				val event = KrollDict()
+				event["allow"] = true
+
+				callback.callAsync(getKrollObject(), event)
+			}
+			.doNotAllow { piracyCheckerError, _ ->
+				val event = KrollDict()
+				event["allow"] = false
+				event["error"] = piracyCheckerError.name
+
+				callback.callAsync(getKrollObject(), event)
+			}
+			.start()
+	}
+
+	private fun fireEventWithIndex(callback: KrollFunction, index: Number) {
+		val event = KrollDict()
+		event["index"] = index;
+		callback.callAsync(getKrollObject(), event)
+	}
+
+	private fun getCurrentActivity(): Activity {
+		var currentActivity = TiApplication.getInstance().currentActivity
+		if (currentActivity == null) {
+			currentActivity = this.activity.get()
+		}
+		return currentActivity!!
 	}
 }
