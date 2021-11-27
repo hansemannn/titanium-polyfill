@@ -63,14 +63,21 @@ class TitaniumPolyfillModule: KrollModule() {
 	fun installSource(): String {
 		val context = TiApplication.getInstance().applicationContext
 		val pkgManager: PackageManager = context.packageManager
-		val installerPackageName = pkgManager.getInstallerPackageName(context.packageName)
+		val installerPackageName = pkgManager.getInstallerPackageName(context.packageName) ?: ""
 
-		return if (installerPackageName!!.startsWith("com.amazon")) {
-			"amazon"
-		} else if ("com.android.vending" == installerPackageName) {
-			"play_store"
-		} else {
-			"unknown"
+		return when {
+			installerPackageName.startsWith("com.amazon") -> {
+				"amazon"
+			}
+			"com.huawei.appmarket" === installerPackageName -> {
+				"huawei"
+			}
+			"com.android.vending" == installerPackageName -> {
+				"play_store"
+			}
+			else -> {
+				"unknown"
+			}
 		}
 	}
 
