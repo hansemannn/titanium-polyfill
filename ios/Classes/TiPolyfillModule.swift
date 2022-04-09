@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVKit
 import TitaniumKit
 
 @objc(TiPolyfillModule)
@@ -28,6 +29,35 @@ class TiPolyfillModule: TiModule {
     guard let image = TiUtils.image(imageProxy, proxy: self) else { return false }
   
     return image.ti_isDark
+  }
+
+  @objc(openFullscreenVideoPlayer:)
+  func openFullscreenVideoPlayer(args: [Any]) {
+    guard let params = args.first as? [String: Any] else { return }
+    guard let url = params["url"] as? String else { return }
+    
+    let player = AVPlayer(url: URL(string: url)!)
+    let vc = AVPlayerViewController()
+    vc.player = player
+    vc.modalPresentationStyle = .overFullScreen;
+
+    TiThreadPerformOnMainThread({
+      TiApp.controller().topPresentedController().present(vc, animated: true) {
+        let selectorName: String = {
+            if #available(iOS 11.3, *) {
+                return "_transitionToFullScreenAnimated:interactive:completionHandler:"
+            } else {
+                return "_transitionToFullScreenAnimated:completionHandler:"
+            }
+        }()
+        let selectorToForceFullScreenMode = NSSelectorFromString(selectorName)
+
+        if vc.responds(to: selectorToForceFullScreenMode) {
+            vc.perform(selectorToForceFullScreenMode, with: true, with: nil)
+        }
+        vc.player?.play()
+      }
+    }, false)
   }
 }
 
