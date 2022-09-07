@@ -59,6 +59,15 @@ class TiPolyfillModule: TiModule {
       }
     }, false)
   }
+  
+  @objc(isAppInstalled:)
+  func isAppInstalled(args: [Any]?) -> Bool {
+    guard let packageId = args?.first as? String, let url = URL(string: "\(packageId)://") else {
+      return false
+    }
+    
+    return UIApplication.shared.canOpenURL(url)
+  }
 }
 
 extension CGImage {

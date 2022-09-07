@@ -10,7 +10,6 @@
 package ti.polyfill
 
 import android.app.Activity
-import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Build
 import android.view.View
@@ -18,7 +17,6 @@ import androidx.annotation.RequiresApi
 import com.github.javiersantos.piracychecker.PiracyChecker
 import com.github.javiersantos.piracychecker.allow
 import com.github.javiersantos.piracychecker.doNotAllow
-import com.github.javiersantos.piracychecker.onError
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
@@ -29,7 +27,6 @@ import org.appcelerator.kroll.KrollFunction
 import org.appcelerator.kroll.KrollModule
 import org.appcelerator.kroll.annotations.Kroll
 import org.appcelerator.kroll.annotations.Kroll.method
-import org.appcelerator.kroll.annotations.Kroll.property
 import org.appcelerator.kroll.common.Log
 import org.appcelerator.titanium.TiApplication
 import java.text.NumberFormat
@@ -84,6 +81,17 @@ class TitaniumPolyfillModule: KrollModule() {
 	@method
 	fun timezoneId(): String {
 		return TimeZone.getDefault().id
+	}
+
+	@method
+	private fun isAppInstalled(packageName: String): Boolean {
+		return try {
+			val packageManager: PackageManager = TiApplication.getAppCurrentActivity().packageManager
+			packageManager.getPackageInfo(packageName, 0)
+			true
+		} catch (e: PackageManager.NameNotFoundException) {
+			false
+		}
 	}
 
 	@method
