@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3AFE3EB128E8EDC800B3270B /* TiPolyfillActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFE3EB028E8EDC800B3270B /* TiPolyfillActionButton.swift */; };
+		3AFE3EB328E8EDE000B3270B /* TiPolyfillActionButtonProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFE3EB228E8EDE000B3270B /* TiPolyfillActionButtonProxy.swift */; };
 		B1E00E65241D179500C384C1 /* TitaniumKit.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1E00E64241D179500C384C1 /* TitaniumKit.xcframework */; };
 		DB34CDE0207B998A005F8E8C /* TiPolyfillModuleAssets.m in Sources */ = {isa = PBXBuildFile; fileRef = DB34CDDE207B998A005F8E8C /* TiPolyfillModuleAssets.m */; };
 		DB34CDE1207B998A005F8E8C /* TiPolyfillModuleAssets.h in Headers */ = {isa = PBXBuildFile; fileRef = DB34CDDF207B998A005F8E8C /* TiPolyfillModuleAssets.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -17,6 +19,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3AFE3EB028E8EDC800B3270B /* TiPolyfillActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TiPolyfillActionButton.swift; path = Classes/TiPolyfillActionButton.swift; sourceTree = "<group>"; };
+		3AFE3EB228E8EDE000B3270B /* TiPolyfillActionButtonProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TiPolyfillActionButtonProxy.swift; path = Classes/TiPolyfillActionButtonProxy.swift; sourceTree = "<group>"; };
 		B1E00E64241D179500C384C1 /* TitaniumKit.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = TitaniumKit.xcframework; path = "$(TITANIUM_SDK)/iphone/Frameworks/TitaniumKit.xcframework"; sourceTree = "<group>"; };
 		DB34CDDE207B998A005F8E8C /* TiPolyfillModuleAssets.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TiPolyfillModuleAssets.m; path = Classes/TiPolyfillModuleAssets.m; sourceTree = SOURCE_ROOT; };
 		DB34CDDF207B998A005F8E8C /* TiPolyfillModuleAssets.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TiPolyfillModuleAssets.h; path = Classes/TiPolyfillModuleAssets.h; sourceTree = SOURCE_ROOT; };
@@ -59,6 +63,8 @@
 			isa = PBXGroup;
 			children = (
 				DB52E2421E9CD0F800AAAEE0 /* TiPolyfillModule.swift */,
+				3AFE3EB028E8EDC800B3270B /* TiPolyfillActionButton.swift */,
+				3AFE3EB228E8EDE000B3270B /* TiPolyfillActionButtonProxy.swift */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -139,7 +145,7 @@
 		DB52E2211E9CCD7000AAAEE0 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1020;
+				LastUpgradeCheck = 1400;
 				TargetAttributes = {
 					DB52E2291E9CCD7000AAAEE0 = {
 						CreatedOnToolsVersion = 8.3;
@@ -181,6 +187,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3AFE3EB328E8EDE000B3270B /* TiPolyfillActionButtonProxy.swift in Sources */,
+				3AFE3EB128E8EDC800B3270B /* TiPolyfillActionButton.swift in Sources */,
 				DB34CDE0207B998A005F8E8C /* TiPolyfillModuleAssets.m in Sources */,
 				DB52E2431E9CD0F800AAAEE0 /* TiPolyfillModule.swift in Sources */,
 			);
@@ -222,6 +230,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -251,7 +260,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -288,6 +297,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -329,8 +339,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
@@ -378,8 +387,7 @@
 			buildSettings = {
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Manual;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
