@@ -30,6 +30,28 @@ class TiPolyfillModule: TiModule {
   
     return image.ti_isDark
   }
+  
+  @objc(formattedDateRange:)
+  func formattedDateRange(args: [Any]) -> String? {
+    guard let params = args.first as? [String: String],
+          let startDate = params["startDate"],
+          let endDate = params["endDate"] else {
+            fatalError("Invalid parameters")
+          }
+
+    let formatter = DateIntervalFormatter()
+    formatter.locale = Locale.current
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    
+    let dateFormatter = DateFormatter()
+    guard let startDateNative = dateFormatter.date(from: startDate),
+          let endDateNative = dateFormatter.date(from: endDate) else {
+            return nil
+          }
+
+    return formatter.string(from: startDateNative, to: endDateNative)
+  }
 
   @objc(openFullscreenVideoPlayer:)
   func openFullscreenVideoPlayer(args: [Any]) {
