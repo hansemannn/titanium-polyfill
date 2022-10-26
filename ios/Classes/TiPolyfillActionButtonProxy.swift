@@ -43,4 +43,16 @@ public class TiPolyfillActionButtonProxy : TiViewProxy {
     let borderRadius = TiUtils.floatValue(value, def: 15.0)
     buttonInstance().layer.cornerRadius = borderRadius
   }
+  
+  @objc(setBorderColor:)
+  func setBorderColor(value: Any) {
+    let borderColor = TiUtils.colorValue(value)
+    buttonInstance().layer.borderColor = borderColor?.color.cgColor
+  }
+  
+  @objc(setBorderWidth:)
+  func setBorderWidth(value: Any) {
+    let borderWidth = TiUtils.floatValue(value, def: 0.0)
+    buttonInstance().layer.borderWidth = borderWidth
+  }
 }
