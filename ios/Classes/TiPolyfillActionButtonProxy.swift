@@ -55,4 +55,37 @@ public class TiPolyfillActionButtonProxy : TiViewProxy {
     let borderWidth = TiUtils.floatValue(value, def: 0.0)
     buttonInstance().layer.borderWidth = borderWidth
   }
+  
+  @objc(setMenu:)
+  @available(iOS 14.0, *)
+  func setMenu(value: Any) {
+    let menu = menuFromJavaScriptArray(value as? [[String: String]] ?? [], proxy: self)
+
+    buttonInstance().menu = menu
+    buttonInstance().showsMenuAsPrimaryAction = true
+  }
+  
+  @available(iOS 13.0, *)
+  private func menuFromJavaScriptArray(_ actions: [[String: Any]], proxy: TiProxy) -> UIMenu {
+    let strongSelf = self
+
+    let children = actions.enumerated().map { (index, obj) in
+      let title = obj["title"] as! String
+      let image = TiUtils.toImage(obj["image"], proxy: self)
+      let destructive = TiUtils.boolValue("destructive", properties: obj, def: false)
+      
+      let action = UIAction(title: title, image: image) { nativeAction in
+        NSLog("[WARN] INDEX = \(index)")
+        strongSelf.fireEvent("menuclick", with: ["index", index])
+      }
+      
+      if destructive {
+        action.attributes = [.destructive]
+      }
+      
+      return action
+    } as [UIAction]
+    
+    return UIMenu(children: children)
+  }
 }
