@@ -65,7 +65,6 @@ public class TiPolyfillActionButtonProxy : TiViewProxy {
     buttonInstance().showsMenuAsPrimaryAction = true
   }
   
-  @available(iOS 13.0, *)
   private func menuFromJavaScriptArray(_ actions: [[String: Any]], proxy: TiProxy) -> UIMenu {
     let strongSelf = self
 
@@ -75,8 +74,7 @@ public class TiPolyfillActionButtonProxy : TiViewProxy {
       let destructive = TiUtils.boolValue("destructive", properties: obj, def: false)
       
       let action = UIAction(title: title, image: image) { nativeAction in
-        NSLog("[WARN] INDEX = \(index)")
-        strongSelf.fireEvent("menuclick", with: ["index", index])
+        strongSelf.fireEvent("menuclick", with: ["index": index])
       }
       
       if destructive {

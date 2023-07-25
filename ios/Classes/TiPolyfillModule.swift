@@ -12,7 +12,7 @@ import TitaniumKit
 
 @objc(TiPolyfillModule)
 class TiPolyfillModule: TiModule {
-
+  
   public let testProperty: String = "Hello World"
   
   func moduleGUID() -> String {
@@ -22,12 +22,12 @@ class TiPolyfillModule: TiModule {
   override func moduleId() -> String! {
     return "ti.polyfill"
   }
-
+  
   @objc(isDarkImage:)
   func isDarkImage(args: [Any]) -> Bool {
     guard let imageProxy = args.first else { return false }
     guard let image = TiUtils.image(imageProxy, proxy: self) else { return false }
-  
+    
     return image.ti_isDark
   }
   
@@ -36,9 +36,9 @@ class TiPolyfillModule: TiModule {
     guard let params = args.first as? [String: String],
           let startDate = params["startDate"],
           let endDate = params["endDate"] else {
-            fatalError("Invalid parameters")
-          }
-
+      fatalError("Invalid parameters")
+    }
+    
     let formatter = DateIntervalFormatter()
     formatter.locale = Locale.current
     formatter.dateStyle = .medium
@@ -47,12 +47,12 @@ class TiPolyfillModule: TiModule {
     let dateFormatter = DateFormatter()
     guard let startDateNative = dateFormatter.date(from: startDate),
           let endDateNative = dateFormatter.date(from: endDate) else {
-            return nil
-          }
-
+      return nil
+    }
+    
     return formatter.string(from: startDateNative, to: endDateNative)
   }
-
+  
   @objc(openFullscreenVideoPlayer:)
   func openFullscreenVideoPlayer(args: [Any]) {
     guard let params = args.first as? [String: Any] else { return }
@@ -62,20 +62,20 @@ class TiPolyfillModule: TiModule {
     let vc = AVPlayerViewController()
     vc.player = player
     vc.modalPresentationStyle = .overFullScreen;
-
+    
     TiThreadPerformOnMainThread({
       TiApp.controller().topPresentedController().present(vc, animated: true) {
         let selectorName: String = {
-            if #available(iOS 11.3, *) {
-                return "_transitionToFullScreenAnimated:interactive:completionHandler:"
-            } else {
-                return "_transitionToFullScreenAnimated:completionHandler:"
-            }
+          if #available(iOS 11.3, *) {
+            return "_transitionToFullScreenAnimated:interactive:completionHandler:"
+          } else {
+            return "_transitionToFullScreenAnimated:completionHandler:"
+          }
         }()
         let selectorToForceFullScreenMode = NSSelectorFromString(selectorName)
-
+        
         if vc.responds(to: selectorToForceFullScreenMode) {
-            vc.perform(selectorToForceFullScreenMode, with: true, with: nil)
+          vc.perform(selectorToForceFullScreenMode, with: true, with: nil)
         }
         vc.player?.play()
       }
@@ -89,6 +89,18 @@ class TiPolyfillModule: TiModule {
     }
     
     return UIApplication.shared.canOpenURL(url)
+  }
+  
+  @objc(relativeDateString:)
+  func relativeDateString(args: [Any]) -> String {
+    guard let date = args.first as? Date else {
+      fatalError("Missing date")
+    }
+    
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    
+    return formatter.localizedString(for: date, relativeTo: Date())
   }
 }
 
