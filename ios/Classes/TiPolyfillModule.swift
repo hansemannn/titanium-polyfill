@@ -12,9 +12,7 @@ import TitaniumKit
 
 @objc(TiPolyfillModule)
 class TiPolyfillModule: TiModule {
-  
-  public let testProperty: String = "Hello World"
-  
+    
   func moduleGUID() -> String {
     return "79b0059b-4142-47d3-8bac-586c5a859586"
   }
@@ -101,6 +99,56 @@ class TiPolyfillModule: TiModule {
     formatter.unitsStyle = .full
     
     return formatter.localizedString(for: date, relativeTo: Date())
+  }
+  
+  @objc(startListeningForKeyboardUpdates:)
+  func startListeningForKeyboardUpdates(unused: [Any]?) {
+
+    // Notifications for when the keyboard opens/closes
+    NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(self.keyboardWillShow),
+        name: UIResponder.keyboardWillShowNotification,
+        object: nil)
+
+    NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(self.keyboardWillHide),
+        name: UIResponder.keyboardWillHideNotification,
+        object: nil)
+  }
+  
+  @objc(stopListeningForKeyboardUpdates:)
+  func stopListeningForKeyboardUpdates(params: [Any]) {
+    NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+  }
+  
+  @objc func keyboardWillShow(_ notification: NSNotification) {
+    moveViewWithKeyboard(notification: notification, keyboardWillShow: true)
+  }
+  
+  @objc func keyboardWillHide(_ notification: NSNotification) {
+    moveViewWithKeyboard(notification: notification, keyboardWillShow: false)
+  }
+  
+  func moveViewWithKeyboard(notification: NSNotification, keyboardWillShow: Bool) {
+      // Keyboard's size
+      guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
+      let keyboardHeight = keyboardSize.height
+      
+      // Keyboard's animation duration (in ms)
+      let keyboardDuration = notification.userInfo![UIResponder.keyboardAnimationDurationUserInfoKey] as! Double * 1000
+      
+      // Keyboard's animation curve
+      let keyboardCurve = UIView.AnimationCurve(rawValue: notification.userInfo![UIResponder.keyboardAnimationCurveUserInfoKey] as! Int)!
+      
+      // Change the constant
+      if keyboardWillShow {
+        fireEvent("willShowKeyboard", with: ["bottomSpacing": keyboardHeight, "duration": keyboardDuration, "curve": keyboardCurve.rawValue] as [String : Any])
+      } else {
+        fireEvent("willHideKeyboard", with: ["duration": keyboardDuration, "curve": keyboardCurve.rawValue] as [String : Any])
+      }
   }
 }
 
