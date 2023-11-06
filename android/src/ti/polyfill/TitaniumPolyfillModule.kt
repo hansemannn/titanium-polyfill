@@ -11,12 +11,15 @@ package ti.polyfill
 
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.view.View
 import androidx.annotation.RequiresApi
 import com.github.javiersantos.piracychecker.PiracyChecker
 import com.github.javiersantos.piracychecker.allow
 import com.github.javiersantos.piracychecker.doNotAllow
+import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
@@ -54,6 +57,15 @@ class TitaniumPolyfillModule: KrollModule() {
 		}
 
 		return format.format(value)
+	}
+
+	@method
+	fun getMediaStoreURL(url: String): String {
+		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+			MediaStore.getMediaUri(TiApplication.getInstance(), Uri.parse(url)).toString()
+		} else {
+			return url;
+		}
 	}
 
 	@method
@@ -189,6 +201,11 @@ class TitaniumPolyfillModule: KrollModule() {
 		}
 
 		builder.show()
+	}
+
+	@Kroll.method
+	fun relativeDateString(date: Date): String {
+		return TimeAgo.using(date.time);
 	}
 
 	@Kroll.method
