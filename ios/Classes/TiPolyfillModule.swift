@@ -9,12 +9,17 @@
 import UIKit
 import AVKit
 import TitaniumKit
+import Network
 
 @objc(TiPolyfillModule)
 class TiPolyfillModule: TiModule {
   
-  var tabGroupHeight = 0.0
+  private var tabGroupHeight = 0.0
     
+  private var pathMonitor: NWPathMonitor? = nil
+  
+  private var currentNetworkStatus: NWPath.Status? = nil
+
   func moduleGUID() -> String {
     return "79b0059b-4142-47d3-8bac-586c5a859586"
   }
@@ -141,7 +146,51 @@ class TiPolyfillModule: TiModule {
     moveViewWithKeyboard(notification: notification, keyboardWillShow: false)
   }
   
-  func moveViewWithKeyboard(notification: NSNotification, keyboardWillShow: Bool) {
+  @objc(getNetworkStatus:)
+  func getNetworkStatus(unused: Any?) -> String? {
+    guard let pathMonitor else {
+      NSLog("[WARN]", "Called \"getNetworkStatus()\" without having an active instance: Make sure to call \"startListeningForNetworkUpdates\" before! Skipping call …")
+      return nil
+    }
+    
+    return self.formatNetworkStatus(pathMonitor.currentPath)
+  }
+  
+  @objc(startListeningForNetworkUpdates:)
+  func startListeningForNetworkUpdates(unused: Any?) {
+    if pathMonitor != nil {
+      NSLog("[WARN]", "Called \"startListeningForNetworkUpdates\" more than once: Make sure to call \"stopListeningForNetworkUpdates\" before! Skipping call …")
+      return
+    }
+
+    self.pathMonitor = NWPathMonitor()
+    
+    guard let pathMonitor else {
+      return
+    }
+
+    pathMonitor.pathUpdateHandler = { path in
+      self.fireNetworkUpdate(path)
+    }
+    
+    pathMonitor.start(queue: .global(qos: .background))
+    fireNetworkUpdate(pathMonitor.currentPath)
+  }
+  
+  @objc(stopListeningForNetworkUpdates:)
+  func stopListeningForNetworkUpdates(unused: Any?) {
+    guard let pathMonitor else {
+      NSLog("[WARN]", "Called \"stopListeningForNetworkUpdates\" without having an active instance: Make sure to call \"startListeningForNetworkUpdates\" before! Skipping call …")
+      return
+    }
+    
+    pathMonitor.cancel()
+    
+    self.pathMonitor = nil
+    self.currentNetworkStatus = nil
+  }
+  
+  private func moveViewWithKeyboard(notification: NSNotification, keyboardWillShow: Bool) {
     // Keyboard's size
     guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
     let keyboardHeight = keyboardSize.height
@@ -159,6 +208,35 @@ class TiPolyfillModule: TiModule {
       "duration": keyboardDuration,
       "curve": keyboardCurve.rawValue
     ] as [String : Any])
+  }
+  
+  private func formatNetworkStatus(_ path: NWPath) -> String {
+    if path.status == .satisfied {
+      if path.usesInterfaceType(.wifi) {
+        return "wifi"
+      } else if path.usesInterfaceType(.cellular) {
+        return "cellular"
+      } else if path.usesInterfaceType(.wiredEthernet) {
+        return "wiredEthernet"
+      } else if path.usesInterfaceType(.loopback) {
+        return "loopback"
+      } else if path.usesInterfaceType(.other) {
+        return "other"
+      }
+    }
+    
+    return "notConnected"
+  }
+  
+  private func fireNetworkUpdate(_ currentPath: NWPath) {
+    let status = self.formatNetworkStatus(currentPath)
+
+    TiThreadPerformOnMainThread({
+      if self.currentNetworkStatus != currentPath.status {
+        self.currentNetworkStatus = currentPath.status
+        self.fireEvent("networkChange", with: ["status": status])
+      }
+    }, false)
   }
 }
 
