@@ -11,7 +11,6 @@ Various native utilities to fill some gaps in Titanium:
 - [x] `showAlert({ title, message, buttonNames, callback })` -> Shows an alert dialog with properly arranged buttons
 - [x] `installSource()` -> Returns the install source of the app, e.g. `play_store` or `amazon`
 - [x] `showNotification({ title, duration })` -> Shows a snackbar instead of toast
-- [x] `downloadLanguage('de')` -> Downloads a language via Play Services (if not available) - used when distributing apps via .aab
 - [x] `relativeDateString(new Date(2022, 0, 1))` ->  Returns the relative date compared to now (e.g. "just now" or "3 minutes ago")
 - [x] `enablePiracyChecker()` -> Detects rooted devices
 - [x] `isAppInstalled('com.facebook.app')` -> Whether or not a given app is installed (by package ID)
