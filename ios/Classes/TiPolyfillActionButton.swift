@@ -12,6 +12,8 @@ import TitaniumKit
 public class TiPolyfillActionButton : TiUIView {
 
   var button = UIButton(type: .custom)
+  private var paddingLeft: CGFloat = 10
+  private var paddingRight: CGFloat = 10
   let generator = UISelectionFeedbackGenerator()
 
   public override func initializeState() {
@@ -26,10 +28,40 @@ public class TiPolyfillActionButton : TiUIView {
     button.addGestureRecognizer(tapRecognizer)
     
     addSubview(button)
+    updateContentInsets()
   }
 
   public override func frameSizeChanged(_ frame: CGRect, bounds: CGRect) {
+    super.frameSizeChanged(frame, bounds: bounds)
     TiUtils.setView(button, positionRect: bounds)
+  }
+
+  public override func contentWidth(forWidth width: CGFloat) -> CGFloat {
+    return button.sizeThatFits(CGSize(width: width, height: 0)).width
+  }
+
+  public override func contentHeight(forWidth width: CGFloat) -> CGFloat {
+    return button.sizeThatFits(CGSize(width: width, height: 0)).height
+  }
+
+  func setHorizontalPadding(left: CGFloat, right: CGFloat) {
+    paddingLeft = max(0, left)
+    paddingRight = max(0, right)
+    updateContentInsets()
+  }
+
+  func currentPadding() -> (left: CGFloat, right: CGFloat) {
+    return (paddingLeft, paddingRight)
+  }
+
+  private func updateContentInsets() {
+    button.contentEdgeInsets = UIEdgeInsets(top: 0, left: paddingLeft, bottom: 0, right: paddingRight)
+    button.setNeedsLayout()
+    setNeedsLayout()
+
+    if let proxy = proxy as? TiViewProxy {
+      proxy.relayout()
+    }
   }
   
   @objc func buttonTapped() {

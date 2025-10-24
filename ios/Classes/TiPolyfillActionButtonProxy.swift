@@ -14,6 +14,55 @@ public class TiPolyfillActionButtonProxy : TiViewProxy {
     return (view as! TiPolyfillActionButton).button
   }
 
+  public override func contentWidth(forWidth width: CGFloat) -> CGFloat {
+    return (view as? TiPolyfillActionButton)?.contentWidth(forWidth: width) ?? 0
+  }
+
+  public override func contentHeight(forWidth width: CGFloat) -> CGFloat {
+    return (view as? TiPolyfillActionButton)?.contentHeight(forWidth: width) ?? 0
+  }
+
+  public override func defaultAutoWidthBehavior(_ args: Any!) -> TiDimension {
+    return TiDimensionAutoSize
+  }
+
+  public override func defaultAutoHeightBehavior(_ args: Any!) -> TiDimension {
+    return TiDimensionAutoSize
+  }
+
+  @objc(setPadding:)
+  func setPadding(value: Any) {
+    guard let actionButton = view as? TiPolyfillActionButton else { return }
+
+    let currentPadding = actionButton.currentPadding()
+    var left = currentPadding.left
+    var right = currentPadding.right
+
+    if let padding = value as? [String: Any] {
+      let paddingDict = padding as [AnyHashable: Any]
+      let leftValue = CGFloat(TiUtils.floatValue("left", properties: paddingDict, def: Float(left)))
+      let rightValue = CGFloat(TiUtils.floatValue("right", properties: paddingDict, def: Float(right)))
+      left = CGFloat(leftValue)
+      right = CGFloat(rightValue)
+    } else {
+      let uniform = TiUtils.floatValue(value, def: Double(left))
+      left = CGFloat(uniform)
+      right = left
+    }
+
+    actionButton.setHorizontalPadding(left: left, right: right)
+  }
+
+  @objc(padding)
+  func padding() -> [String: Any] {
+    if let actionButton = view as? TiPolyfillActionButton {
+      let padding = actionButton.currentPadding()
+      return ["left": padding.left, "right": padding.right]
+    }
+
+    return ["left": 10.0, "right": 10.0]
+  }
+
   @objc(setTitle:)
   func setTitle(value: Any) {
     let title = TiUtils.stringValue(value) ?? ""
