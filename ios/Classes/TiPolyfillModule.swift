@@ -10,6 +10,7 @@ import UIKit
 import AVKit
 import TitaniumKit
 import Network
+import PDFKit
 
 @objc(TiPolyfillModule)
 class TiPolyfillModule: TiModule {
@@ -188,6 +189,18 @@ class TiPolyfillModule: TiModule {
     
     self.pathMonitor = nil
     self.currentNetworkStatus = nil
+  }
+  
+  @objc(convertTiffToPDF:)
+  func convertTiffToPDF(params: [Any]) -> String? {
+    guard let urlString = params.first as? String, let filename = params[1] as? String else {
+      fatalError("Missing required .tiff URL")
+    }
+    
+    guard let url = TiUtils.toURL(urlString, proxy: self),
+          let pdfURL = convertMultiPageTIFFToPDF(url: url, filename: filename) else { return nil }
+    
+    return pdfURL.absoluteString
   }
   
   private func moveViewWithKeyboard(notification: NSNotification, keyboardWillShow: Bool) {
