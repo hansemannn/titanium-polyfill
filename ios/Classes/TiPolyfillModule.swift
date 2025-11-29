@@ -219,7 +219,7 @@ class TiPolyfillModule: TiModule {
       "transitionType": keyboardWillShow ? "show" : "hide",
       "bottomSpacing": keyboardWillShow ? keyboardHeight - tabGroupHeight : 0,
       "duration": keyboardDuration,
-      "curve": keyboardCurve.rawValue
+      "curve": keyboardCurve.rawValue << 16
     ] as [String : Any])
   }
   
