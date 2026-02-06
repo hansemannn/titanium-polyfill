@@ -16,6 +16,8 @@ import PDFKit
 class TiPolyfillModule: TiModule {
   
   private var tabGroupHeight = 0.0
+  private var lastBottomSpacing: CGFloat = -1
+  private var lastKeyboardVisible = false
     
   private var pathMonitor: NWPathMonitor? = nil
   
@@ -108,43 +110,94 @@ class TiPolyfillModule: TiModule {
     
     return formatter.localizedString(for: date, relativeTo: Date())
   }
-  
+
   @objc(startListeningForKeyboardUpdates:)
   func startListeningForKeyboardUpdates(params: [Any]) {
-    if let params = params.first as? [String: Any],
-       let tabGroupProxy = params["tabGroup"] as? TiWindowProxy,
-       let tabGroup = tabGroupProxy.value(forKey: "tabbar") as? UITabBar {
-      self.tabGroupHeight = tabGroup.bounds.height
-    }
-
-    // Notifications for when the keyboard opens/closes
     NotificationCenter.default.addObserver(
-        self,
-        selector: #selector(self.keyboardWillShow),
-        name: UIResponder.keyboardWillShowNotification,
-        object: nil)
+      self,
+      selector: #selector(self.keyboardFrameChanged),
+      name: UIResponder.keyboardWillChangeFrameNotification,
+      object: nil)
 
     NotificationCenter.default.addObserver(
-        self,
-        selector: #selector(self.keyboardWillHide),
-        name: UIResponder.keyboardWillHideNotification,
-        object: nil)
+      self,
+      selector: #selector(self.keyboardWillHideFallback),
+      name: UIResponder.keyboardWillHideNotification,
+      object: nil)
   }
-  
+
   @objc(stopListeningForKeyboardUpdates:)
   func stopListeningForKeyboardUpdates(params: [Any]) {
-    NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-    NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    
-    self.tabGroupHeight = 0.0
+    NotificationCenter.default.removeObserver(self,
+      name: UIResponder.keyboardWillChangeFrameNotification,
+      object: nil)
+
+    NotificationCenter.default.removeObserver(self,
+      name: UIResponder.keyboardWillHideNotification,
+      object: nil)
   }
-  
-  @objc func keyboardWillShow(_ notification: NSNotification) {
-    moveViewWithKeyboard(notification: notification, keyboardWillShow: true)
+
+  @objc private func keyboardFrameChanged(_ notification: Notification) {
+    guard let userInfo = notification.userInfo else { return }
+    guard let keyboardFrameValue = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else { return }
+
+    let endFrameScreen = keyboardFrameValue.cgRectValue
+    let duration = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0) * 1000
+
+    // Keyboard's animation curve
+    let keyboardCurve = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? Int ?? 0
+
+    // Ensure window exists
+    let window: UIWindow? =
+        TiApp.controller().view.window ??
+        UIApplication.shared.windows.first { $0.isKeyWindow }
+
+    guard let window else { return }
+
+    // Convert keyboard frame into window coordinate space
+    let endFrame = window.convert(endFrameScreen, from: nil)
+    let windowBounds = window.bounds
+
+    // Keyboard can be docked, floating or split, compute visible state by intersection with the window.
+    let intersection = windowBounds.intersection(endFrame)
+    let keyboardVisible = !intersection.isNull && intersection.height > 0 && intersection.width > 0
+
+    // Floating keyboards should not add bottom spacing; detect by width vs. window.
+    let isFloating = endFrame.width < windowBounds.width * 0.8
+    let bottomSpacing = isFloating ? 0 : max(0, intersection.height)
+
+    // Ignore duplicate events triggered for tiny tolerances.
+    if abs(bottomSpacing - lastBottomSpacing) < 0.5 && keyboardVisible == lastKeyboardVisible {
+      return
+    }
+
+    let transitionType = keyboardVisible ? "show" : "hide"
+
+    lastBottomSpacing = bottomSpacing
+    lastKeyboardVisible = keyboardVisible
+
+    fireEvent("keyboardChanged", with: [
+      "transitionType": transitionType,
+      "bottomSpacing": bottomSpacing,
+      "isFloating": isFloating,
+      "duration": duration,
+      "curve": keyboardCurve
+    ])
   }
-  
-  @objc func keyboardWillHide(_ notification: NSNotification) {
-    moveViewWithKeyboard(notification: notification, keyboardWillShow: false)
+
+  @objc private func keyboardWillHideFallback(_ notification: Notification) {
+    if lastBottomSpacing == 0 { return }
+
+    lastBottomSpacing = 0
+    lastKeyboardVisible = false
+
+    fireEvent("keyboardChanged", with: [
+      "transitionType": "hide",
+      "bottomSpacing": 0,
+      "isFloating": false,
+      "duration": 250,
+      "curve": 0
+    ])
   }
   
   @objc(getNetworkStatus:)
@@ -201,26 +254,6 @@ class TiPolyfillModule: TiModule {
           let pdfURL = convertMultiPageTIFFToPDF(url: url, filename: filename) else { return nil }
     
     return pdfURL.absoluteString
-  }
-  
-  private func moveViewWithKeyboard(notification: NSNotification, keyboardWillShow: Bool) {
-    // Keyboard's size
-    guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
-    let keyboardHeight = keyboardSize.height
-    
-    // Keyboard's animation duration (in ms)
-    let keyboardDuration = notification.userInfo![UIResponder.keyboardAnimationDurationUserInfoKey] as! Double * 1000
-    
-    // Keyboard's animation curve
-    let keyboardCurve = UIView.AnimationCurve(rawValue: notification.userInfo![UIResponder.keyboardAnimationCurveUserInfoKey] as! Int)!
-    
-    // Change the constant
-    fireEvent("keyboardChanged", with: [
-      "transitionType": keyboardWillShow ? "show" : "hide",
-      "bottomSpacing": keyboardWillShow ? keyboardHeight - tabGroupHeight : 0,
-      "duration": keyboardDuration,
-      "curve": keyboardCurve.rawValue << 16
-    ] as [String : Any])
   }
   
   private func formatNetworkStatus(_ path: NWPath) -> String {
